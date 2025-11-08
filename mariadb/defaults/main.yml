@@ -1,0 +1,4 @@
+---
+# defaults file for mariadb
+mariadb_port: 3306
+mariadb_datadir: /data

@@ -1,0 +1,54 @@
+---
+# tasks file for mariadb
+- name: 'Install packages'
+  ansible.builtin.yum:
+    name: "{{ packages }}"
+    state: present
+
+- name: 'Start mariadb service'
+  ansible.builtin.service:
+    name: mariadb
+    state: started
+    enabled: true
+
+- name: 'Execute mysql_secure_install'
+  ansible.builtin.expect:
+    command: mysql_secure_installation
+    responses:
+      'Enter current password for root': '{{ root_password }}'
+      'Switch to unix_socket authentication': 'Y'
+      'Change the root password?': 'N'
+      'Remove anonymous users': 'Y'
+      'Disallow root login remotely': 'Y'
+      'Remove test database and access to it': 'Y'
+      'Reload privilege tables now': 'Y'
+    timeout: 1
+
+- name: '/etc/my.cnf.d/mariadb-server.cnf'
+  ansible.builtin.template:
+    src: mariadb-server.cnf.j2
+    dest: /etc/my.cnf.d/mariadb-server.cnf
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Disable mariadb
+  changed_when: true
+
+- name: 'Disable mariadb prepare db dir'
+  ansible.builtin.lineinfile:
+    path: /etc/systemd/system/mysql.service
+    search_string: 'ExecStartPre=/usr/libexec/mariadb-prepare-db-dir %n'
+    line: '#ExecStartPre=/usr/libexec/mariadb-prepare-db-dir %n'
+
+- name: 'Reload systemd'
+  ansible.builtin.systemd:
+    daemon_reload: yes
+
+- name: 'Add service for firewalld'
+  ansible.posix.firewalld:
+    port: "{{ item }}"
+    permanent: true
+    immediate: true
+    state: enabled
+  loop:
+    - "{{ mariadb_port }}/tcp"

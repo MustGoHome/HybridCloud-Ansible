@@ -1,0 +1,6 @@
+---
+# vars file for jenkins
+packages:
+  - fontconfig
+  - java-21-openjdk
+  - jenkins

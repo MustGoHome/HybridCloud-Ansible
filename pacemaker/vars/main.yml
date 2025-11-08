@@ -1,0 +1,10 @@
+---
+# vars file for ha-preinstaller
+repositories:
+  - highavailability
+  - highavailability-debuginfo
+  - highavailability-source
+
+packages:
+  - pcs
+  - fence-agents-all

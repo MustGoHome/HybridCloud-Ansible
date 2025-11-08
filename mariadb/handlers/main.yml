@@ -1,0 +1,7 @@
+---
+# handlers file for mariadb
+- name: 'Disable mariadb'
+  ansible.builtin.service:
+    name: mariadb
+    state: stopped
+    enabled: false

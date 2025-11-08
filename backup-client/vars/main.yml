@@ -1,0 +1,5 @@
+---
+borg_packages:
+  - borgbackup
+  - borgmatic
+  - sshpass

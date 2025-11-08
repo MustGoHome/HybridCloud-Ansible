@@ -1,0 +1,10 @@
+[
+{% for target in icmp_targets %}
+  {
+    "targets": ["{{ target.ip }}"],
+    "labels": {
+      "name": "{{ target.name }}"
+    }
+  }{% if not loop.last %},{% endif %}
+{% endfor %}
+]

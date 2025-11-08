@@ -1,0 +1,22 @@
+---
+# meta file for prometheus role
+
+galaxy_info:
+  author: HybridCloud05 Team03
+  description: Prometheus Server 설치 및 기본 설정을 자동화 합니다
+  license: license (GPL-2.0-or-later, MIT, etc)
+
+  min_ansible_version: 2.11
+
+  platforms:
+    - name: EL
+      versions:
+        - 8
+        - 9
+  galaxy_tags:
+    - monitoring
+    - promtheus
+    - server
+    - exporter
+
+dependencies: []

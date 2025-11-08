@@ -1,0 +1,49 @@
+---
+# tasks file for ha-preinstaller
+- name: 'Enable ha repositories'
+  community.general.ini_file:
+    path: /etc/yum.repos.d/centos-addons.repo
+    section: "{{ item }}"
+    option: enabled
+    value: 1
+    state: present
+  loop: "{{ repositories }}"
+
+- name: 'Install packages'
+  ansible.builtin.dnf:
+    name: "{{ packages }}"
+    state: present
+
+- name: 'Add service for firewalld'
+  ansible.posix.firewalld:
+    service: high-availability
+    permanent: true
+    immediate: true
+    state: enabled
+
+- name: 'Restart pcsd'
+  ansible.builtin.systemd:
+    name: pcsd
+    state: restarted
+    enabled: true
+
+- name: 'Set password of hacluster'
+  ansible.builtin.user:
+    name: hacluster
+    password: "{{ hacluster_password | password_hash('sha512') }}"
+    state: present
+
+- name: 'Setup auth'
+  ansible.builtin.shell:
+    cmd: "pcs host auth {{ cluster_host[0] }} {{ cluster_host[1] }} -u hacluster -p {{ hacluster_password }}"
+  when: ansible_facts['fqdn'] == cluster_host[0]
+
+- name: 'Setup cluster'
+  ansible.builtin.shell:
+    cmd: "pcs cluster setup web_cluster --start {{ cluster_host[0] }} {{ cluster_host[1] }}"
+  when: ansible_facts['fqdn'] == cluster_host[0]
+
+- name: 'Enable cluster'
+  ansible.builtin.shell:
+    cmd: pcs cluster enable --all
+  when: ansible_facts['fqdn'] == cluster_host[0]

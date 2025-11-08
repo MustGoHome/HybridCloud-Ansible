@@ -1,0 +1,32 @@
+---
+# defaults file for prometheus role
+
+# 사용자 및 그룹 설정
+prometheus_user: prometheus
+prometheus_group: prometheus
+prometheus_shell: /sbin/nologin
+prometheus_home: /
+
+# 버전 및 다운로드 경로
+prometheus_version: 3.7.1
+prometheus_tarball: "prometheus-{{ prometheus_version }}.linux-amd64.tar.gz"
+prometheus_download_url: "https://github.com/prometheus/prometheus/releases/download/v{{ prometheus_version }}/{{ prometheus_tarball }}"
+prometheus_extract_dir: "/tmp/prometheus-{{ prometheus_version }}.linux-amd64"
+
+# 경로 및 포트 설정
+prometheus_bin_dir: /usr/local/bin
+prometheus_config_dir: /etc/prometheus
+prometheus_data_dir: /var/lib/prometheus
+prometheus_targets_dir: "{{ prometheus_config_dir }}/targets"
+prometheus_listen_address: "0.0.0.0:{{ prometheus_web_port }}"
+prometheus_web_port: 9090
+prometheus_blackbox_exporter_address: "localhost:9115"
+
+# ICMP 핑 대상 
+icmp_targets:
+  - { ip: '172.16.6.254', name: 'gateway' }
+  - { ip: '172.16.6.175', name: 'ci/cd' }
+  - { ip: '172.16.6.178', name: 'monitor' }
+  - { ip: '172.16.6.177', name: 'ansible' }
+  - { ip: '172.16.6.221', name: 'web1_test' }
+  - { ip: '172.16.6.121', name: 'web1_pj' }

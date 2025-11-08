@@ -1,0 +1,37 @@
+---
+# tasks file for jenkins
+- name: 'Download jenkins repository'
+  ansible.builtin.get_url:
+    url: "{{ source_src }}"
+    dest: "{{ source_dest }}"
+
+- name: 'Import jenkins gpg key'
+  ansible.builtin.rpm_key:
+    state: present
+    key: "{{ rpm_key }}"
+
+- name: 'Install packages'
+  ansible.builtin.dnf:
+    name: "{{ packages }}"
+    state: present
+
+- name: 'Make java 32 bit an alternative with low priority'
+  community.general.alternatives:
+    name: java
+    path: "{{ java_path }}"
+  notify: 'Restart jenkins'
+  changed_when: true
+
+- name: 'Create ssh key'
+  ansible.builtin.openssh_keypair:
+    path: "/root/.ssh/id_rsa"
+    type: rsa
+    size: 2048
+    state: present
+
+- name: 'Add service for firewalld'
+  ansible.posix.firewalld:
+    port: "{{ jenkins_port }}/tcp"
+    permanent: true
+    immediate: true
+    state: enabled

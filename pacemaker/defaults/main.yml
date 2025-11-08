@@ -1,0 +1,5 @@
+---
+# defaults file for ha-preinstaller
+cluster_host:
+  - web01.hb05.local
+  - web02.hb05.local

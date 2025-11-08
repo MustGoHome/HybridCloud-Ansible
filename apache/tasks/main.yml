@@ -1,0 +1,31 @@
+---
+# tasks file for apache
+- name: 'Install packages'
+  ansible.builtin.dnf:
+    name: "{{ packages }}"
+    state: present
+
+- name: 'Deploy /etc/httpd/conf/httpd.conf'
+  ansible.builtin.template:
+    src: httpd.conf.j2
+    dest: /etc/httpd/conf/httpd.conf
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: 'Deploy /etc/httpd/conf.d/django.conf'
+  ansible.builtin.template:
+    src: django.conf.j2
+    dest: /etc/httpd/conf.d/django.conf
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: 'Add service for firewalld'
+  ansible.posix.firewalld:
+    port: "{{ item }}"
+    permanent: true
+    immediate: true
+    state: enabled
+  loop:
+    - "{{ apache_listen }}/tcp"

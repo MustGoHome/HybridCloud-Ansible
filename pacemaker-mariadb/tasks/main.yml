@@ -1,0 +1,92 @@
+---
+# tasks file for ha
+- name: 'Create stonith for fencing'
+  community.general.pacemaker_stonith:
+    state: present
+    name: "fence_{{ item.0 }}"
+    stonith_type: fence_vmware_rest
+    stonith_options:
+      - "ip={{ vcenter_ip }}"
+      - "ipport={{ vcenter_port }}"
+      - "username={{ vcenter_user }}"
+      - "password={{ vcenter_password }}"
+      - "plug={{ item.0 }}"
+      - "pcmk_host_list={{ item.1 }}"
+      - "ssl_insecure={{ ssl_insecure }}"
+  loop: "{{ cluster_vm | zip(cluster_host) | list }}"
+
+- name: 'Create a new partition'
+  ansible.builtin.parted:
+    device: "{{ iscsi_device }}"
+    number: 1
+    part_start: 0%
+    part_end: 100%
+    fs_type: xfs
+    state: present
+    label: gpt
+
+- name: 'Set filesystem'
+  community.general.filesystem:
+    dev: "{{ iscsi_device }}1"
+    fstype: xfs
+    force: yes
+    state: present
+
+- name: 'Make mounted directory'
+  ansible.builtin.file:
+    path: "{{ iscsi_directory }}"
+    state: directory
+    mode: '0755'
+
+- name: 'Create ipaddr resource for ha'
+  community.general.pacemaker_resource:
+    state: present
+    name: ha_vip
+    resource_type:
+      resource_name: IPaddr2
+    resource_option:
+      - "ip={{ cluster_vip }}"
+      - "nic={{ cluster_nic }}"
+      - "cidr_netmask=24"
+    resource_argument:
+      argument_action: group
+      argument_option: "{{ cluster_group }}"
+
+- name: 'Create filesystem resource for ha'
+  community.general.pacemaker_resource:
+    state: present
+    name: ha_fs
+    resource_type:
+      resource_name: Filesystem
+    resource_option:
+      - "device={{ iscsi_device }}1"
+      - "directory={{ iscsi_directory }}"
+      - "fstype=xfs"
+    resource_argument:
+      argument_action: group
+      argument_option: "{{ cluster_group }}"
+
+- name: 'Initializing data directory'
+  ansible.builtin.shell:
+    cmd: mariadb-install-db --datadir=/data/mysql
+
+- name: 'Update mounted directory owner'
+  ansible.builtin.file:
+    path: "{{ iscsi_directory }}"
+    state: directory
+    recurse: yes
+    owner: mysql
+    group: mysql
+
+- name: 'Create mariadb resource for ha'
+  community.general.pacemaker_resource:
+    state: present
+    name: ha_mariadb
+    resource_type:
+      resource_name: mysql
+    resource_option:
+      - "config=/etc/my.cnf"
+      - "datadir={{ iscsi_directory }}/mysql"
+    resource_argument:
+      argument_action: group
+      argument_option: "{{ cluster_group }}"
